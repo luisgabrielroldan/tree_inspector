@@ -1,45 +1,47 @@
-defmodule TreeDrawTest.Node do
+defmodule TreeInspectorTest.Node do
   defstruct name: nil, items: nil, other: nil
 end
 
-defmodule TreeDrawTest do
+defmodule TreeInspectorTest do
   use ExUnit.Case
 
-  @tree %TreeDrawTest.Node{
+  alias TreeInspectorTest.Node
+
+  @tree %Node{
     name: "foo",
     items: [
       %{
         name: "bar",
         items: [
-          %TreeDrawTest.Node{
+          %Node{
             name: "baz",
             items: []
           }
         ]
       },
-      %TreeDrawTest.Node{
+      %Node{
         name: "100",
     items: [
-      %TreeDrawTest.Node{
+      %Node{
         name: "bar",
         items: [
-          %TreeDrawTest.Node{
+          %Node{
             name: "baz",
             items: []
           }
         ]
       },
-      %TreeDrawTest.Node{
+      %Node{
         name: "100",
         items: []
       },
-      %TreeDrawTest.Node{
+      %Node{
         name: "100",
         items: []
       }
     ]
       },
-      %TreeDrawTest.Node{
+      %Node{
         name: "100",
         items: []
       }
@@ -47,6 +49,6 @@ defmodule TreeDrawTest do
   }
 
   test "show me the money" do
-    TreeDraw.inspect(@tree, whitelist: [:items, :name])
+    TreeInspector.inspect(@tree)
   end
 end

@@ -1,9 +1,9 @@
-defmodule TreeDraw.MixProject do
+defmodule TreeInspector.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :tree_draw,
+      app: :tree_inspector,
       version: "0.1.0",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
