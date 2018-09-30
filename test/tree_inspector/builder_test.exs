@@ -13,6 +13,8 @@ defmodule TreeInspector.BuilderTest do
         text: "lorem",
         atom: :value,
         boolean: true,
+        tuple1: {1,2,3,4},
+        tuple2: {1,2},
         float: 0.003,
         naive_datetime: ~N[2018-09-17 23:24:44.257495],
         date: ~D[2018-09-17],

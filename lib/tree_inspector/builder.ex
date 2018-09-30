@@ -29,6 +29,8 @@ defmodule TreeInspector.Builder do
     do: %Node{label: [{:key, key}, :colon, {:value, value}]}
 
   defp build_node(map, key, opts) when is_map(map) do
+    skip_types = Keyword.get(opts, :skip_types, [])
+
     type =
       get_type(map)
 
@@ -40,16 +42,54 @@ defmodule TreeInspector.Builder do
       end
 
     children =
-      map
-      |> get_map_keys(opts)
-      |> Enum.map(fn k ->
-        build_node(Map.get(map, k), k, opts)
-      end)
+      if Map.get(map, :__struct__) in skip_types do
+        []
+      else
+        map
+        |> get_map_keys(opts)
+        |> Enum.map(fn k ->
+          build_node(Map.get(map, k), k, opts)
+        end)
+      end
 
     %Node{
       label: label,
       children: children
     }
+  end
+
+  defp build_node(tuple, key, opts) when is_tuple(tuple) do
+    list = Tuple.to_list(tuple)
+
+    if length(list) > 2 do
+      type = {:type, "{}"}
+
+      label =
+        if key do
+          [{:key, key}, :colon, type]
+        else
+          [type]
+        end
+
+      %Node{
+        label: label,
+        children: build_node_list(list, opts)
+      }
+    else
+      label =
+        cond do
+          is_nil(key) ->
+            [{:value, tuple}]
+
+          is_atom(key) ->
+            [{:key, key}, :colon, {:value, tuple}]
+
+          true ->
+            [{:key, key}, :fat_arrow, {:value, tuple}]
+        end
+
+      %Node{label: label}
+    end
   end
 
   defp build_node(list, key, opts) when is_list(list) do
@@ -94,9 +134,14 @@ defmodule TreeInspector.Builder do
   defp get_type(%{}),
     do: {:type, "%{}"}
 
-  defp get_map_keys(map, _opts) do
+  defp get_map_keys(map, opts) do
+    skip_keys = Keyword.get(opts, :skip_keys, [])
+    filter_fields = Keyword.get(opts, :filter_fields, fn _, _ -> true end)
+
     map
     |> Map.keys()
     |> Enum.filter(&(not (&1 in @map_keys_blacklist)))
+    |> Enum.filter(&(not (&1 in skip_keys)))
+    |> Enum.filter(fn k -> filter_fields.(k, Map.get(map, k)) end)
   end
 end
