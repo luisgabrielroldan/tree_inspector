@@ -41,5 +41,4 @@ defmodule TreeInspector.BuilderTest do
     )
     |> Printer.print()
   end
-
 end

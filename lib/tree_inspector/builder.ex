@@ -2,7 +2,6 @@ defmodule TreeInspector.Builder do
   alias TreeInspector.Node
 
   @map_keys_blacklist [:__struct__]
-  @default_formatter TreeInspector.Formatter
 
   def from(element, opts \\ [])
 
@@ -21,25 +20,23 @@ defmodule TreeInspector.Builder do
   # For the well known structures we can to represent them
   # with the default inspect result string
   defp build_node(%NaiveDateTime{} = value, key, _opts),
-    do: %Node{label: "#{format_key(key)} : #{format_value(value)}"}
+    do: %Node{label: [{:key, key}, :colon, {:value, value}]}
 
   defp build_node(%Date{} = value, key, _opts),
-    do: %Node{label: "#{format_key(key)} : #{format_value(value)}"}
+    do: %Node{label: [{:key, key}, :colon, {:value, value}]}
 
   defp build_node(%Time{} = value, key, _opts),
-    do: %Node{label: "#{format_key(key)} : #{format_value(value)}"}
+    do: %Node{label: [{:key, key}, :colon, {:value, value}]}
 
   defp build_node(map, key, opts) when is_map(map) do
     type =
-      map
-      |> get_struct_name()
-      |> format_type_name()
+      get_type(map)
 
     label =
       if key do
-        "#{format_key(key)} : #{type}"
+        [{:key, key}, :colon, type]
       else
-        type
+        [type]
       end
 
     children =
@@ -56,14 +53,14 @@ defmodule TreeInspector.Builder do
   end
 
   defp build_node(list, key, opts) when is_list(list) do
-    type = format_type_name("[]")
-
     label =
       if key do
-        "#{format_key(key)} : #{type}"
+        [{:key, key}, :colon]
       else
-        type
+        []
       end
+
+    label = label ++ [{:type, "[]"}]
 
     %Node{
       label: label,
@@ -75,40 +72,27 @@ defmodule TreeInspector.Builder do
     label =
       cond do
         is_nil(key) ->
-          format_value(value)
+          [{:value, value}]
 
         is_atom(key) ->
-          "#{format_key(key)} : #{format_value(value)}"
+          [{:key, key}, :colon, {:value, value}]
 
         true ->
-          arrow = format_arrow("=>")
-          "#{format_key(key)} #{arrow} #{format_value(value)}"
+          [{:key, key}, :fat_arrow, {:value, value}]
       end
 
     %Node{label: label}
   end
 
-  defp get_struct_name(%{__struct__: name}) do
+  defp get_type(%{__struct__: name}) do
     name
     |> to_string()
     |> String.slice(7..-1) # Remove "Elixir." prefix
-    |> (&"%#{&1}{}").()
+    |> (&{:type, ["%", &1, "{}"]}).()
   end
 
-  defp get_struct_name(%{}),
-    do: "%{}"
-
-  defp format_arrow(arrow),
-    do: @default_formatter.format_arrow(arrow)
-
-  defp format_type_name(name),
-    do: @default_formatter.format_type_name(name)
-
-  defp format_key(key),
-    do: @default_formatter.format_key(key)
-
-  defp format_value(value),
-    do: @default_formatter.format_value(value)
+  defp get_type(%{}),
+    do: {:type, "%{}"}
 
   defp get_map_keys(map, _opts) do
     map

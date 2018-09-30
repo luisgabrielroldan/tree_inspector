@@ -4,9 +4,9 @@ defmodule TreeInspector do
     Printer,
   }
 
-  def inspect(thing) do
+  def inspect(thing, opts \\ []) do
     thing
-    |> Builder.from()
-    |> Printer.print()
+    |> Builder.from(opts)
+    |> Printer.print(opts)
   end
 end
